@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>FreePass</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0b0d12;
+      --surf:    #13161e;
+      --surf2:   #1a1e29;
+      --border:  #222736;
+      --accent:  #4f8ef7;
+      --purple:  #7c5af5;
+      --green:   #22c55e;
+      --orange:  #f59e0b;
+      --red:     #ef4444;
+      --text:    #e2e4ed;
+      --muted:   #6b7494;
+      --r:       10px;
+    }
+
+    body {
+      width: 330px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Header ── */
+    .hdr {
+      padding: 15px 18px 12px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .hdr-text h1 { font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
+    .hdr-text p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* ── Status card ── */
+    .card {
+      margin: 14px 16px 0;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 13px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--muted); flex-shrink: 0;
+      transition: background .3s, box-shadow .3s;
+    }
+    .dot.on  { background: var(--green); box-shadow: 0 0 7px rgba(34,197,94,.5); }
+    .dot.err { background: var(--red);   box-shadow: 0 0 7px rgba(239,68,68,.4); }
+    .dot.searching { background: var(--orange); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .card-info { flex: 1; min-width: 0; }
+    .card-label { font-weight: 600; font-size: 13px; }
+    .card-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Timer ring ── */
+    .ring-wrap { position: relative; width: 50px; height: 50px; flex-shrink: 0; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg   { fill: none; stroke: var(--border); stroke-width: 3; }
+    .ring-fill { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round;
+                 stroke-dasharray: 132; stroke-dashoffset: 132; transition: stroke-dashoffset 1s linear; }
+    .ring-txt  {
+      position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+      font-variant-numeric: tabular-nums; letter-spacing: -.3px;
+    }
+
+    /* ── Progress log ── */
+    .log-wrap {
+      margin: 10px 16px 0;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .3s ease;
+    }
+    .log-wrap.open { max-height: 90px; }
+    .log-inner { padding: 8px 12px; }
+    .log-item {
+      font-size: 11px; color: var(--muted);
+      display: flex; align-items: center; gap: 6px;
+      padding: 2px 0;
+    }
+    .log-item::before { content: "›"; color: var(--accent); font-weight: 700; }
+    .log-item.ok::before { content: "✓"; color: var(--green); }
+
+    /* ── Proxy badge ── */
+    .proxy-badge {
+      margin: 8px 16px 0;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted);
+    }
+    .proxy-badge .pdot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+    .proxy-badge .pdot.on { background: var(--green); }
+
+    /* ── Button ── */
+    .btn-row { padding: 12px 16px; }
+    .btn {
+      width: 100%; padding: 12px; border: none; border-radius: var(--r);
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all .15s;
+    }
+    .btn-connect {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #fff;
+    }
+    .btn-connect:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-disconnect {
+      background: rgba(239,68,68,.1); color: var(--red);
+      border: 1px solid rgba(239,68,68,.2);
+    }
+    .btn-disconnect:hover:not(:disabled) { background: rgba(239,68,68,.18); }
+    .btn:active:not(:disabled) { transform: scale(.98); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none !important; filter: none !important; }
+
+    /* ── Sites ── */
+    .sites {
+      margin: 0 16px 14px;
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 11px 13px;
+    }
+    .sites-ttl {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
+      color: var(--muted); font-weight: 600; margin-bottom: 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px 7px;
+      font-size: 11px; color: var(--muted);
+      display: flex; align-items: center; gap: 3px;
+    }
+
+    /* ── Footer ── */
+    .foot {
+      padding: 8px 16px 13px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .foot-l { font-size: 11px; color: var(--muted); }
+    .foot-r { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: none; }
+    .foot-r:hover { text-decoration: underline; }
+
+    /* ── Spinner ── */
+    .spin {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .55s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="hdr">
+    <div class="logo">🔓</div>
+    <div class="hdr-text">
+      <h1>FreePass</h1>
+      <p>Свободный интернет · 60 минут</p>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="card" id="card">
+    <div class="dot" id="dot"></div>
+    <div class="card-info">
+      <div class="card-label" id="cardLabel">Не подключено</div>
+      <div class="card-sub"   id="cardSub">Нажмите кнопку ниже</div>
+    </div>
+    <div class="ring-wrap hidden" id="ringWrap">
+      <svg width="50" height="50" viewBox="0 0 50 50">
+        <circle class="ring-bg"   cx="25" cy="25" r="21"/>
+        <circle class="ring-fill" id="ringFill" cx="25" cy="25" r="21"/>
+      </svg>
+      <div class="ring-txt" id="ringTxt">60:00</div>
+    </div>
+  </div>
+
+  <!-- Progress log (показывается при поиске) -->
+  <div class="log-wrap" id="logWrap">
+    <div class="log-inner" id="logInner"></div>
+  </div>
+
+  <!-- Proxy badge -->
+  <div class="proxy-badge" id="proxyBadge">
+    <div class="pdot" id="pdot"></div>
+    <span id="proxyTxt">Прокси не выбран</span>
+  </div>
+
+  <!-- Button -->
+  <div class="btn-row">
+    <button class="btn btn-connect" id="btn">
+      <span id="btnIco">⚡</span>
+      <span id="btnTxt">Подключиться</span>
+    </button>
+  </div>
+
+  <!-- Sites -->
+  <div class="sites">
+    <div class="sites-ttl">Поддерживаемые сайты</div>
+    <div class="chips">
+      <div class="chip">▶ YouTube</div>
+      <div class="chip">✈️ Telegram</div>
+      <div class="chip">📷 Instagram</div>
+      <div class="chip">🐦 X / Twitter</div>
+      <div class="chip">💬 Discord</div>
+      <div class="chip">🎵 TikTok</div>
+      <div class="chip">🔍 Google</div>
+      <div class="chip">🎮 Twitch</div>
+      <div class="chip">💼 LinkedIn</div>
+      <div class="chip">+ любые сайты</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="foot-l">FreePass v2.0 · OinkTech</div>
+    <a class="foot-r" href="https://github.com/oinktechltd/freepass" target="_blank">GitHub ↗</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

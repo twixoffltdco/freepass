@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "FreePass — Свободный интернет",
+  "version": "2.0.0",
+  "description": "Бесплатный доступ к YouTube, Telegram и любым сайтам на 60 минут. Авто-поиск рабочих прокси.",
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "FreePass"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "proxy",
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
